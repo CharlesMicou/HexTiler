@@ -4,12 +4,12 @@
 
 from hexagon import Coordinates
 from hexagon import Hexagon
-
+from renderer import Renderer
 # This is where we'll actually do hexagon manipulation
 a = Coordinates(1, 2)
-
-b = Hexagon(a, 2, "VERTICAL")
-
+b = Hexagon(a, 2, "HORIZONTAL")
 c = b.get_vertices()
 
-print c
+R = Renderer()
+
+R.test_render(c)
