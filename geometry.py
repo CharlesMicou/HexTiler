@@ -27,6 +27,24 @@ class Hexagon:
 			vertices.append(next_vertex)
 		return vertices
 
+	def get_area(self):
+		return 2 #wrote this down somewhere
+
+class Rectangle:
+	def __init__(self, bottom_left, top_right):
+		self.bottom_left = bottom_left
+		self.top_right = top_right
+
+	def get_vertices(self):
+		return [
+			Coordinates(self.bottom_left.x, self.bottom_left.y),
+			Coordinates(self.bottom_left.x, self.top_right.y),
+			Coordinates(self.top_right.x, self.top_right.y),
+			Coordinates(self.top_right.x, self.bottom_left.y)]
+
+	def get_area(self):
+		return (self.top_right.x - self.bottom_left.x) * (self.top_right.y - self.bottom_left.y)
+
 class Coordinates:
 	def __init__(self, x, y):
 		self.x = float(x)
