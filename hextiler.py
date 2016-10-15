@@ -7,29 +7,22 @@ from geometry import Hexagon
 from geometry import Rectangle
 from renderer import Renderer
 import math
+import sys
 
-WIDTH = 15.0
-HEIGHT = 10.0
-SIZE_TEMP = 1.0
+if len(sys.argv) != 4:
+	print "Usage is WIDTH HEIGHT HEXES"
+	sys.exit()
 
-# This is where we'll actually do hexagon manipulation
-def dummy_grid(rows, cols, size):
-	origins = []
-	for j in range(rows):
-		for i in range(cols):
-			origins.append(Coordinates(i*size, j*size))
-	return origins
-
-def make_grid(width, height, total_hexes):
-	#todo
-	return dummy_grid(3,4,1)
+WIDTH = float(sys.argv[1])
+HEIGHT = float(sys.argv[2])
+MAX_HEXES = int(sys.argv[3])
 
 def get_centres_within_region(bottom_left, top_right, offset, size):
 	centres = []
 	odd = True
 	current_centre = Coordinates(bottom_left.x + offset.x, bottom_left.y + offset.y)
-	while current_centre.y < top_right.y:
-		while current_centre.x < top_right.x + (size * math.sqrt(3) / 2):
+	while current_centre.y + size/2 <= top_right.y + 1.5*size:
+		while current_centre.x + (size * math.sqrt(3) / 2) <= top_right.x + math.sqrt(3)*size:
 			centres.append(Coordinates(current_centre.x, current_centre.y))
 			current_centre.x += size * math.sqrt(3)
 
@@ -42,14 +35,144 @@ def get_centres_within_region(bottom_left, top_right, offset, size):
 			odd = True
 	return centres
 
+def solve_quadratic(a, b, c):
+    if b**2 - 4*a*c < 0:
+        print "Complex solution to quadratic, you don't want this"
+        return
+    little_root = (-b - math.sqrt(b**2 - 4*a*c))/(2.0*a)
+    big_root = (-b + math.sqrt(b**2 - 4*a*c))/(2.0*a)
+    return [little_root, big_root]
+
+def smallest_positive(a):
+    current_candidate = sys.maxint
+    for element in a:
+        if element > 0 and element < current_candidate:
+            current_candidate = element
+    return current_candidate
+
+def solve(W, H, N):
+	vertical_solution = solve_vertical(W, H, N)
+	horizontal_solution = solve_vertical(H, W, N)
+	if vertical_solution > horizontal_solution:
+		return (horizontal_solution, "HORIZONTAL")
+	else:
+		return (vertical_solution, "VERTICAL")
+
+
+def solve_vertical(W, H, N):
+	# Solve continuous via a quadratic
+	a = 3*N + 1
+	b = W * (2/math.sqrt(3) - math.sqrt(3)) - H
+	c = -2*W*H/math.sqrt(3)
+	x = smallest_positive(solve_quadratic(a,b,c))
+
+	# Get alpha and beta
+	alpha = math.floor(W/(math.sqrt(3)*x)) + 1
+	beta = math.floor((H/x - 1)/3)
+
+	# Try restricting by width:
+	d_width = W/(math.sqrt(3)*math.floor((N - 3*beta - 1)/(2*beta + 1)))
+
+	if d_width <= 0:
+		# degenerate case
+		d_width = sys.maxint
+	else:
+		current_N = len(get_centres_within_region(Coordinates(0,0),
+						Coordinates(WIDTH, HEIGHT),
+						Coordinates(d_width*math.sqrt(3)/2, d_width*0.5),
+						d_width))
+
+		if current_N > N:
+			# we wanted too many, decrease number of columns until we are ok
+			trial_cols = int(math.ceil(W/(d_width*math.sqrt(3))))
+			while current_N > N:
+				print current_N
+				trial_cols -= 1
+				if trial_cols < 1:
+					# prevent getting stuck in degenerate cases
+					break
+				d_width = W/(math.sqrt(3)*trial_cols)
+				current_N = len(get_centres_within_region(Coordinates(0,0),
+								Coordinates(WIDTH, HEIGHT),
+								Coordinates(d_width*math.sqrt(3)/2, d_width*0.5),
+								d_width))
+		else:
+			# check for solutions that might exist with smaller d
+			trial_cols = int(math.ceil(W/(d_width*math.sqrt(3))))
+			next_N = current_N
+			next_d_width = d_width
+			while next_N < N:
+				d_width = next_d_width
+				trial_cols += 1
+				next_d_width = W/(math.sqrt(3)*trial_cols)
+				next_N = len(get_centres_within_region(Coordinates(0,0),
+								Coordinates(WIDTH, HEIGHT),
+								Coordinates(next_d_width*math.sqrt(3)/2, next_d_width*0.5),
+								next_d_width))
+
+	# Try restricting by height
+	d_height = H/(math.floor(N/(2*alpha+1))*3+1)
+	# Shrink/grow d so that we don't need too many hexes:
+	current_N = len(get_centres_within_region(Coordinates(0,0),
+					Coordinates(WIDTH, HEIGHT),
+					Coordinates(d_height*math.sqrt(3)/2, d_height*0.5),
+					d_height))
+
+	if current_N > N:
+		# we wanted too many, decrease number of columns until we are ok
+		trial_rows = int(math.ceil(H/(1.5*d_height) - 2.0/3.0))
+		while current_N > N:
+			print current_N
+			trial_rows -= 1
+			if trial_rows < 1:
+				# prevent getting stuck in degenerate cases
+				break
+			d_height = H/(math.sqrt(3)*trial_rows)
+			print d_height
+			current_N = len(get_centres_within_region(Coordinates(0,0),
+							Coordinates(WIDTH, HEIGHT),
+							Coordinates(d_height*math.sqrt(3)/2, d_height*0.5),
+							d_height))
+	else:
+		# check for solutions that might exist with smaller d
+		trial_rows = int(math.ceil(H/(1.5*d_height) - 2.0/3.0))
+		next_N = current_N
+		next_d_height = d_height
+		while next_N < N:
+			d_height = next_d_height
+			trial_rows += 1
+			next_d_height = W/(math.sqrt(3)*trial_rows)
+			next_N = len(get_centres_within_region(Coordinates(0,0),
+							Coordinates(WIDTH, HEIGHT),
+							Coordinates(next_d_height*math.sqrt(3)/2, next_d_height*0.5),
+							next_d_height))
+
+	return min([d_width, d_height])
+
+
+solution = solve(WIDTH, HEIGHT, MAX_HEXES)
+
+if solution[1] == "HORIZONTAL":
+	centres = get_centres_within_region(Coordinates(0,0),
+										Coordinates(HEIGHT, WIDTH),
+										Coordinates(solution[0]*math.sqrt(3)/2, solution[0]*0.5),
+										solution[0])
+	for centre in centres:
+		temp = centre.x
+		centre.x = centre.y
+		centre.y = temp
+
+else:
+	centres = get_centres_within_region(Coordinates(0,0),
+										Coordinates(WIDTH, HEIGHT),
+										Coordinates(solution[0]*math.sqrt(3)/2, solution[0]*0.5),
+										solution[0])
 
 hex_vertex_bundles = []
-for centre in get_centres_within_region(Coordinates(0,0),
-										Coordinates(WIDTH, HEIGHT),
-										Coordinates(SIZE_TEMP*math.sqrt(3)/2, SIZE_TEMP*0.5),
-										SIZE_TEMP):
-	hex_vertex_bundles.append(Hexagon(centre, SIZE_TEMP, "VERTICAL").get_vertices())
+for centre in centres:
+	hex_vertex_bundles.append(Hexagon(centre, solution[0], solution[1]).get_vertices())
 
+print "Used " + str(len(centres)) + " of " + str(MAX_HEXES) + " hexes. Next break-point at [unimplemented] total hexes."
 
 bounding = Rectangle(Coordinates(0, 0), Coordinates(WIDTH, HEIGHT))
 

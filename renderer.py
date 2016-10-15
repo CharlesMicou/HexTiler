@@ -7,9 +7,6 @@ import matplotlib.patches as mpatches
 import matplotlib.pyplot as plt
 
 class Renderer:
-	def __init__(self):
-		print "Renderer init goes here please"
-
 	def render(self, bounding_rectangle_vertices, hex_vertices):
 		fig, ax = plt.subplots()
 
