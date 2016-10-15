@@ -16,20 +16,11 @@ class Renderer:
 		plot_polygon(bounding_rectangle_vertices, ax, 'gray')
 
 		hex_colors = ['b', 'r', 'g', 'm', 'c', 'y', 'purple', 'orange']
-		i = 0
-		for vertex_bundle in hex_vertices:
+		for i, vertex_bundle in enumerate(hex_vertices):
 			plot_polygon(vertex_bundle, ax, hex_colors[i%len(hex_colors)])
-			i += 1
 		ax.axis('equal')
+		ax.grid('on')
 		plt.show()
-
-	def test_render(self, points):
-		fig, ax = plt.subplots()
-		plot_polygon(points, ax)
-		#ax.grid()
-		ax.axis('equal')
-		plt.show()
-
 
 
 def plot_polygon(vertices, ax, color):
