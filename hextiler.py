@@ -97,12 +97,11 @@ def solve_vertical(W, H, N):
 		if current_N > N:
 			# we wanted too many, decrease number of columns until we are ok
 			trial_cols = int(math.ceil(W/(d_width*math.sqrt(3))))
-			while current_N > N:
-				print current_N
+			while current_N >= N:
 				trial_cols -= 1
 				if trial_cols < 1:
 					# prevent getting stuck in degenerate cases
-					d_width = W
+					d_width = sys.maxint
 					break
 				d_width = W/(math.sqrt(3)*trial_cols)
 				current_N = len(get_centres_within_region(Coordinates(0,0),
@@ -114,7 +113,7 @@ def solve_vertical(W, H, N):
 			trial_cols = int(math.ceil(W/(d_width*math.sqrt(3))))
 			next_N = current_N
 			next_d_width = d_width
-			while next_N < N:
+			while next_N <= N:
 				d_width = next_d_width
 				trial_cols += 1
 				next_d_width = W/(math.sqrt(3)*trial_cols)
@@ -138,13 +137,13 @@ def solve_vertical(W, H, N):
 	if current_N > N:
 		# we wanted too many, decrease number of columns until we are ok
 		trial_rows = int(math.ceil(H/(1.5*d_height) - 2.0/3.0))
-		while current_N > N:
+		while current_N >= N:
 			trial_rows -= 1
 			if trial_rows < 1:
-				d_height = H
+				d_height = sys.maxint
 				# prevent getting stuck in degenerate cases
 				break
-			d_height = H/(math.sqrt(3)*trial_rows)
+			d_height = H/(1+1.5*(trial_rows-1))
 			current_N = len(get_centres_within_region(Coordinates(0,0),
 							Coordinates(WIDTH, HEIGHT),
 							Coordinates(d_height*math.sqrt(3)/2, d_height*0.5),
@@ -154,10 +153,10 @@ def solve_vertical(W, H, N):
 		trial_rows = int(math.ceil(H/(1.5*d_height) - 2.0/3.0))
 		next_N = current_N
 		next_d_height = d_height
-		while next_N < N:
+		while next_N <= N:
 			d_height = next_d_height
 			trial_rows += 1
-			next_d_height = W/(math.sqrt(3)*trial_rows)
+			next_d_height = H/(1+1.5*(trial_rows-1))
 			next_N = len(get_centres_within_region(Coordinates(0,0),
 							Coordinates(WIDTH, HEIGHT),
 							Coordinates(next_d_height*math.sqrt(3)/2, next_d_height*0.5),
@@ -184,26 +183,29 @@ else:
 										Coordinates(solution[0]*math.sqrt(3)/2, solution[0]*0.5),
 										solution[0])
 
-# Centre of mass adjustment
-hexagon_centre_of_mass = Coordinates(0, 0)
+# Centre the hexagons for symmetry by finding a bounding Rectangle
+min_x = sys.maxint
+max_x = -sys.maxint
+min_y = sys.maxint
+max_y = -sys.maxint
 for centre in centres:
-	hexagon_centre_of_mass.x += centre.x / len(centres)
-	hexagon_centre_of_mass.y += centre.y / len(centres)
-
+	min_x = min(centre.x, min_x)
+	max_x = max(centre.x, max_x)
+	min_y = min(centre.y, min_y)
+	max_y = max(centre.y, max_y)
+hexagon_centre_of_mass = Coordinates((max_x+min_x)/2.0, (max_y+min_y)/2.0)
 adjustment = Coordinates(WIDTH / 2 - hexagon_centre_of_mass.x, HEIGHT / 2 - hexagon_centre_of_mass.y)
-
 for centre in centres:
 	centre.x += adjustment.x
 	centre.y += adjustment.y
 
+# Result
+print "Used " + str(len(centres)) + " of " + str(MAX_HEXES) + " hexes. Next break-point at [unimplemented] total hexes."
+
+# Draw the hexes
 hex_vertex_bundles = []
 for centre in centres:
 	hex_vertex_bundles.append(Hexagon(centre, solution[0], solution[1]).get_vertices())
-
-print "Used " + str(len(centres)) + " of " + str(MAX_HEXES) + " hexes. Next break-point at [unimplemented] total hexes."
-
 bounding = Rectangle(Coordinates(0, 0), Coordinates(WIDTH, HEIGHT))
-
 R = Renderer()
-
 R.render(bounding.get_vertices(), hex_vertex_bundles)
