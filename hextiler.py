@@ -61,13 +61,14 @@ def solve(W, H, N):
 
 
 def solve_vertical(W, H, N):
-
 	if N < 2:
 		# Just one hexagon, this will result in a divide by zero
 		# We need a rectangle enclosed by one pointy hexagon
 		d_width = W / math.sqrt(3)
 		d_height = H
 		return max(d_width, d_height)
+
+	potential_breakpoints = []
 
 	# Solve continuous via a quadratic
 	a = 3*N + 1
@@ -90,14 +91,14 @@ def solve_vertical(W, H, N):
 		d_width = W / math.sqrt(3)
 	else:
 		current_N = len(get_centres_within_region(Coordinates(0,0),
-						Coordinates(WIDTH, HEIGHT),
+						Coordinates(W, H),
 						Coordinates(d_width*math.sqrt(3)/2, d_width*0.5),
 						d_width))
 
 		if current_N > N:
 			# we wanted too many, decrease number of columns until we are ok
 			trial_cols = int(math.ceil(W/(d_width*math.sqrt(3))))
-			while current_N >= N:
+			while current_N > N:
 				trial_cols -= 1
 				if trial_cols < 1:
 					# prevent getting stuck in degenerate cases
@@ -105,7 +106,7 @@ def solve_vertical(W, H, N):
 					break
 				d_width = W/(math.sqrt(3)*trial_cols)
 				current_N = len(get_centres_within_region(Coordinates(0,0),
-								Coordinates(WIDTH, HEIGHT),
+								Coordinates(W, H),
 								Coordinates(d_width*math.sqrt(3)/2, d_width*0.5),
 								d_width))
 		else:
@@ -118,7 +119,7 @@ def solve_vertical(W, H, N):
 				trial_cols += 1
 				next_d_width = W/(math.sqrt(3)*trial_cols)
 				next_N = len(get_centres_within_region(Coordinates(0,0),
-								Coordinates(WIDTH, HEIGHT),
+								Coordinates(W, H),
 								Coordinates(next_d_width*math.sqrt(3)/2, next_d_width*0.5),
 								next_d_width))
 
@@ -130,22 +131,23 @@ def solve_vertical(W, H, N):
 		d_height = H
 	# Shrink/grow d so that we don't need too many hexes:
 	current_N = len(get_centres_within_region(Coordinates(0,0),
-					Coordinates(WIDTH, HEIGHT),
+					Coordinates(W, H),
 					Coordinates(d_height*math.sqrt(3)/2, d_height*0.5),
 					d_height))
 
 	if current_N > N:
 		# we wanted too many, decrease number of columns until we are ok
-		trial_rows = int(math.ceil(H/(1.5*d_height) - 2.0/3.0))
-		while current_N >= N:
+		trial_rows = int(math.ceil(H/(1.5*d_height) - 2.0/3.0)) + 1
+		while current_N > N:
 			trial_rows -= 1
-			if trial_rows < 1:
+			if trial_rows < 0:
 				d_height = sys.maxint
 				# prevent getting stuck in degenerate cases
 				break
+
 			d_height = H/(1+1.5*(trial_rows-1))
 			current_N = len(get_centres_within_region(Coordinates(0,0),
-							Coordinates(WIDTH, HEIGHT),
+							Coordinates(W, H),
 							Coordinates(d_height*math.sqrt(3)/2, d_height*0.5),
 							d_height))
 	else:
@@ -158,10 +160,11 @@ def solve_vertical(W, H, N):
 			trial_rows += 1
 			next_d_height = H/(1+1.5*(trial_rows-1))
 			next_N = len(get_centres_within_region(Coordinates(0,0),
-							Coordinates(WIDTH, HEIGHT),
+							Coordinates(W, H),
 							Coordinates(next_d_height*math.sqrt(3)/2, next_d_height*0.5),
 							next_d_height))
 
+	print "d_width=" + str(d_width) + "  d_height=" + str(d_height)
 	return min([d_width, d_height])
 
 
@@ -200,7 +203,7 @@ for centre in centres:
 	centre.y += adjustment.y
 
 # Result
-print "Used " + str(len(centres)) + " of " + str(MAX_HEXES) + " hexes. Next break-point at [unimplemented] total hexes."
+print "Used " + str(len(centres)) + " of " + str(MAX_HEXES) + " hexes with edge length " + str(solution[0]) + ". Next break-point at [unimplemented] total hexes."
 
 # Draw the hexes
 hex_vertex_bundles = []
