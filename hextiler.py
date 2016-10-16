@@ -61,6 +61,14 @@ def solve(W, H, N):
 
 
 def solve_vertical(W, H, N):
+
+	if N < 2:
+		# Just one hexagon, this will result in a divide by zero
+		# We need a rectangle enclosed by one pointy hexagon
+		d_width = W / math.sqrt(3)
+		d_height = H
+		return max(d_width, d_height)
+
 	# Solve continuous via a quadratic
 	a = 3*N + 1
 	b = W * (2/math.sqrt(3) - math.sqrt(3)) - H
@@ -76,7 +84,7 @@ def solve_vertical(W, H, N):
 
 	if d_width <= 0:
 		# degenerate case
-		d_width = sys.maxint
+		d_width = W / math.sqrt(3)
 	else:
 		current_N = len(get_centres_within_region(Coordinates(0,0),
 						Coordinates(WIDTH, HEIGHT),
@@ -91,6 +99,7 @@ def solve_vertical(W, H, N):
 				trial_cols -= 1
 				if trial_cols < 1:
 					# prevent getting stuck in degenerate cases
+					d_width = W
 					break
 				d_width = W/(math.sqrt(3)*trial_cols)
 				current_N = len(get_centres_within_region(Coordinates(0,0),
@@ -113,6 +122,10 @@ def solve_vertical(W, H, N):
 
 	# Try restricting by height
 	d_height = H/(math.floor(N/(2*alpha+1))*3+1)
+
+	if d_height < 0:
+		#degenerate case
+		d_height = H
 	# Shrink/grow d so that we don't need too many hexes:
 	current_N = len(get_centres_within_region(Coordinates(0,0),
 					Coordinates(WIDTH, HEIGHT),
@@ -123,13 +136,12 @@ def solve_vertical(W, H, N):
 		# we wanted too many, decrease number of columns until we are ok
 		trial_rows = int(math.ceil(H/(1.5*d_height) - 2.0/3.0))
 		while current_N > N:
-			print current_N
 			trial_rows -= 1
 			if trial_rows < 1:
+				d_height = H
 				# prevent getting stuck in degenerate cases
 				break
 			d_height = H/(math.sqrt(3)*trial_rows)
-			print d_height
 			current_N = len(get_centres_within_region(Coordinates(0,0),
 							Coordinates(WIDTH, HEIGHT),
 							Coordinates(d_height*math.sqrt(3)/2, d_height*0.5),
