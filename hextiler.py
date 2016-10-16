@@ -80,7 +80,10 @@ def solve_vertical(W, H, N):
 	beta = math.floor((H/x - 1)/3)
 
 	# Try restricting by width:
-	d_width = W/(math.sqrt(3)*math.floor((N - 3*beta - 1)/(2*beta + 1)))
+	if (math.sqrt(3)*math.floor((N - 3*beta - 1)/(2*beta + 1))) != 0:
+		d_width = W/(math.sqrt(3)*math.floor((N - 3*beta - 1)/(2*beta + 1)))
+	else:
+		d_width = W / math.sqrt(3)
 
 	if d_width <= 0:
 		# degenerate case
@@ -180,6 +183,18 @@ else:
 										Coordinates(WIDTH, HEIGHT),
 										Coordinates(solution[0]*math.sqrt(3)/2, solution[0]*0.5),
 										solution[0])
+
+# Centre of mass adjustment
+hexagon_centre_of_mass = Coordinates(0, 0)
+for centre in centres:
+	hexagon_centre_of_mass.x += centre.x / len(centres)
+	hexagon_centre_of_mass.y += centre.y / len(centres)
+
+adjustment = Coordinates(WIDTH / 2 - hexagon_centre_of_mass.x, HEIGHT / 2 - hexagon_centre_of_mass.y)
+
+for centre in centres:
+	centre.x += adjustment.x
+	centre.y += adjustment.y
 
 hex_vertex_bundles = []
 for centre in centres:
