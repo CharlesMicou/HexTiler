@@ -54,10 +54,11 @@ def smallest_positive(a):
 def solve(W, H, N):
 	vertical_solution = solve_vertical(W, H, N)
 	horizontal_solution = solve_vertical(H, W, N)
-	if vertical_solution > horizontal_solution:
-		return (horizontal_solution, "HORIZONTAL")
+	next_breakpoint = smallest_positive([horizontal_solution[1], vertical_solution[1]])
+	if vertical_solution[0] > horizontal_solution[0]:
+		return (horizontal_solution[0], "HORIZONTAL",  next_breakpoint)
 	else:
-		return (vertical_solution, "VERTICAL")
+		return (vertical_solution[0], "VERTICAL", next_breakpoint)
 
 
 def solve_vertical(W, H, N):
@@ -66,7 +67,7 @@ def solve_vertical(W, H, N):
 		# We need a rectangle enclosed by one pointy hexagon
 		d_width = W / math.sqrt(3)
 		d_height = H
-		return max(d_width, d_height)
+		return (max(d_width, d_height), 2)
 
 	potential_breakpoints = []
 
@@ -97,6 +98,7 @@ def solve_vertical(W, H, N):
 
 		if current_N > N:
 			# we wanted too many, decrease number of columns until we are ok
+			potential_breakpoints.append(current_N)
 			trial_cols = int(math.ceil(W/(d_width*math.sqrt(3))))
 			while current_N > N:
 				trial_cols -= 1
@@ -122,6 +124,8 @@ def solve_vertical(W, H, N):
 								Coordinates(W, H),
 								Coordinates(next_d_width*math.sqrt(3)/2, next_d_width*0.5),
 								next_d_width))
+				if next_N > N:
+					potential_breakpoints.append(next_N)
 
 	# Try restricting by height
 	d_height = H/(math.floor(N/(2*alpha+1))*3+1)
@@ -137,6 +141,7 @@ def solve_vertical(W, H, N):
 
 	if current_N > N:
 		# we wanted too many, decrease number of columns until we are ok
+		potential_breakpoints.append(current_N)
 		trial_rows = int(math.ceil(H/(1.5*d_height) - 2.0/3.0)) + 1
 		while current_N > N:
 			trial_rows -= 1
@@ -163,9 +168,12 @@ def solve_vertical(W, H, N):
 							Coordinates(W, H),
 							Coordinates(next_d_height*math.sqrt(3)/2, next_d_height*0.5),
 							next_d_height))
-
-	print "d_width=" + str(d_width) + "  d_height=" + str(d_height)
-	return min([d_width, d_height])
+			if next_N > N:
+				potential_breakpoints.append(next_N)
+	next_breakpoint = sys.maxint
+	if potential_breakpoints != []:
+		next_breakpoint = min(potential_breakpoints)
+	return (min([d_width, d_height]), next_breakpoint)
 
 
 solution = solve(WIDTH, HEIGHT, MAX_HEXES)
@@ -203,7 +211,9 @@ for centre in centres:
 	centre.y += adjustment.y
 
 # Result
-print "Used " + str(len(centres)) + " of " + str(MAX_HEXES) + " hexes with edge length " + str(solution[0]) + ". Next break-point at [unimplemented] total hexes."
+print "Used " + str(len(centres)) + " of " + str(MAX_HEXES) + " hexes with edge length " + str(solution[0]) + "."
+if str(solution[2]) != sys.maxint:
+	print "Identified a potential break-point (no unused hexes) at " + str(solution[2]) + " total hexes. (It is possible for a breakpoint to exist earlier)"
 
 # Draw the hexes
 hex_vertex_bundles = []
