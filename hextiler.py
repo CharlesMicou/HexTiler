@@ -21,8 +21,9 @@ def get_centres_within_region(bottom_left, top_right, offset, size):
 	centres = []
 	odd = True
 	current_centre = Coordinates(bottom_left.x + offset.x, bottom_left.y + offset.y)
-	while current_centre.y + size/2 <= top_right.y + 1.5*size:
-		while current_centre.x + (size * math.sqrt(3) / 2) <= top_right.x + math.sqrt(3)*size:
+	#todo fix these bounds
+	while current_centre.y < top_right.y + size - size/1000:
+		while current_centre.x < top_right.x + size*math.sqrt(3)/2 - size/1000 :
 			centres.append(Coordinates(current_centre.x, current_centre.y))
 			current_centre.x += size * math.sqrt(3)
 
