@@ -213,7 +213,7 @@ for centre in centres:
 # Result
 print "Used " + str(len(centres)) + " of " + str(MAX_HEXES) + " hexes with edge length " + str(solution[0]) + "."
 if str(solution[2]) != sys.maxint:
-	print "Identified a potential break-point (no unused hexes) at " + str(solution[2]) + " total hexes. (It is possible for a breakpoint to exist earlier)"
+	print "Identified a potential no-unused-hexes case at " + str(solution[2]) + " total hexes. (It is possible for such a case to exist for lower N)"
 
 # Draw the hexes
 hex_vertex_bundles = []
